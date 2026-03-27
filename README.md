@@ -48,7 +48,7 @@ Open your terminal and navigate to the backend API directory:
 ```bash
 cd ocean-eye/server
 npm install
-npm run dev
+npm start
 ```
 *The server will boot up on `http://localhost:5000` and automatically begin seeding baseline data.*
 
