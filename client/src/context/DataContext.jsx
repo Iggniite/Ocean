@@ -1,3 +1,5 @@
+
+/*
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 
@@ -53,6 +55,82 @@ export const DataProvider = ({ children }) => {
 
   return (
     <DataContext.Provider value={{ zones, history, alerts, loading, fetchData, smoothed, setSmoothed }}>
+      {children}
+    </DataContext.Provider>
+  );
+};
+*/
+
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import axios from 'axios';
+
+const DataContext = createContext(null);
+
+export const useData = () => useContext(DataContext);
+
+// ✅ BASE API URL (UPDATED)
+const API = 'https://ocean-eye-backend.onrender.com/api';
+
+export const DataProvider = ({ children }) => {
+  const [rawZones, setRawZones] = useState([]);
+  const [history, setHistory] = useState([]);
+  const [alerts, setAlerts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [smoothed, setSmoothed] = useState(false);
+
+  const fetchData = async () => {
+    try {
+      const [zonesRes, historyRes, alertsRes] = await Promise.all([
+        axios.get(`${API}/analyse`),
+        axios.get(`${API}/history`),
+        axios.get(`${API}/alerts`)
+      ]);
+
+      setRawZones(zonesRes.data.data);
+      setHistory(historyRes.data.data);
+      setAlerts(alertsRes.data.data);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  };
+
+  const zones = React.useMemo(() => {
+    if (!smoothed) return rawZones;
+
+    const getAvg = (arr) =>
+      arr && arr.length > 0
+        ? arr.slice(-5).reduce((a, b) => a + b, 0) / Math.min(5, arr.length)
+        : 0;
+
+    return rawZones.map((z) => ({
+      ...z,
+      pH: getAvg(z.history?.pH) || z.pH,
+      oil: getAvg(z.history?.oil) || z.oil,
+      plastic: getAvg(z.history?.plastic) || z.plastic,
+      riskScore: Math.round(getAvg(z.history?.riskScore)) || z.riskScore
+    }));
+  }, [rawZones, smoothed]);
+
+  useEffect(() => {
+    fetchData();
+
+    const interval = setInterval(fetchData, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <DataContext.Provider
+      value={{
+        zones,
+        history,
+        alerts,
+        loading,
+        fetchData,
+        smoothed,
+        setSmoothed
+      }}
+    >
       {children}
     </DataContext.Provider>
   );
