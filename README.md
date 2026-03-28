@@ -98,8 +98,7 @@ Backend:
 ---
 
 ## 🚀 Live Demo
-Frontend: https://ocean-eye-frontend.onrender.com  
-Backend: https://ocean-eye-backend.onrender.com  
+website: https://oceaneye-48ur.onrender.com/ 
 
 ---
 
